@@ -1,0 +1,123 @@
+// @sylefeb 2020
+// https://github.com/sylefeb/Silice
+// MIT license, see LICENSE_MIT in Silice repo root
+
+$include('qpsram2x.si')
+
+$$if ICE40 then
+import('../../Silice/projects/common/plls/icebrkr_25.v')
+$$end
+
+$$uart_in_clock_freq_mhz = 25
+$include('../../Silice/projects/common/uart.si')
+
+unit main(
+  output uint3 leds,
+  input  uint1 uart_rx,
+  output uint1 uart_tx,
+  inout  uint1 ram_io0,
+  inout  uint1 ram_io1,
+  inout  uint1 ram_io2,
+  inout  uint1 ram_io3,
+  output uint1 ram_clk,
+  output uint1 ram_csn,
+)
+// clocking (pll) and reset
+$$if ICE40 then
+<@clock_pll> {
+  uint1 clock_pll = uninitialized;
+  pll pllgen(
+    clock_in  <: clock,
+    clock_out :> clock_pll,
+  );
+$$else
+{
+$$end
+
+$$if SIMULATION then
+  uint32 cycle(0);
+$$end
+
+  qpsram_ram ram(
+    ram_csn  :> ram_csn,
+    ram_clk  :> ram_clk,
+    ram_io0 <:> ram_io0,
+    ram_io1 <:> ram_io1,
+    ram_io2 <:> ram_io2,
+    ram_io3 <:> ram_io3,
+  );
+
+  uart_out uo;
+  uart_sender usend(
+    io      <:> uo,
+    uart_tx :>  uart_tx
+  );
+
+  ram.in_ready     := 0; // maintain low, pulse high to read/write
+  uo.data_in_ready := 0; // maintain low, pulse high to send
+
+  algorithm {
+
+    uint16 n = 0;
+
+$$if ICARUS then
+    ram.wenable  = 0;
+$$end
+
+    uo.data_in       = 8hF0;
+    uo.data_in_ready = 1;
+    while (uo.busy) {}
+
+    while (ram.busy) {} // wait for init ... usefull? likely not on badge
+
+    uo.data_in       = 8hF1;
+    uo.data_in_ready = 1;
+    while (uo.busy) {}
+
+    //while (1) {
+
+      // write some
+      n = 0;
+      ram.wenable  = 1;
+      while (~n[8,1]) {
+        ram.addr     = n;
+        ram.wdata    = {4hA,n[0,4]};
+        ram.in_ready = 1;
+        while (ram.busy) {}
+        n = n + 1;
+      }
+
+      uo.data_in       = 8hAA;
+      uo.data_in_ready = 1;
+      while (uo.busy) {}
+
+      // read some
+      n = 0;
+      ram.wenable  = 0;
+      while (~n[8,1]) {
+        ram.addr     = n;
+        ram.in_ready = 1;
+        while (ram.busy) {}
+        uo.data_in       = ram.rdata;
+        uo.data_in_ready = 1;
+        while (uo.busy) {}
+        n = n + 1;
+      }
+
+      uo.data_in       = 8hF3;
+      uo.data_in_ready = 1;
+      while (uo.busy) {}
+    //}
+
+
+  }
+
+$$if SIMULATION then
+  always_after {
+    if (cycle == 20000) { __finish(); }
+    cycle = cycle + 1;
+  }
+$$end
+
+
+}

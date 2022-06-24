@@ -1,0 +1,163 @@
+// @sylefeb 2020
+// https://github.com/sylefeb/Silice
+// MIT license, see LICENSE_MIT in Silice repo root
+
+$$if not SIMULATION then
+import('../../Silice/projects/common/ice40_sb_io.v')
+import('../../Silice/projects/common/ice40_sb_io_ddr.v')
+$$else
+import('../../Silice/projects/common/ddr.v')
+$$end
+
+unit sb_io_n(input auto o,output uint8 p)
+///                              ^^^^^ TODO FIXME sameas(o) should work
+{
+  $$for i=0,widthof('o')-1 do
+  sb_io _(clock <: clock, out <: o[$i$,1], pin :> p[$i$,1]);
+  $$end
+}
+
+circuitry lcd_write(input byte, input cmd_else_dta)
+{
+  scr_byte    = byte;
+  scr_rs      = ~cmd_else_dta;
+  scr_trigger = 0; // pulse low
+++:
+}
+
+unit main(
+  output uint3 leds,
+$$if not SIMULATION then
+  output uint8 lcd_d,
+  output uint1 lcd_rs,
+  output uint1 lcd_wr_n,
+  output uint1 lcd_cs_n(0),
+  output uint1 lcd_rst_n(1),
+  input  uint1 lcd_mode,
+  input  uint1 lcd_fmark,
+  input  uint1 uart_rx,
+  output uint1 uart_tx,
+$$end
+) {
+
+$$if SIMULATION then
+  uint1  lcd_mode(1);
+  uint1  lcd_rs(1);
+  uint8  lcd_d(0);
+  uint1  lcd_wr_n(0);
+  uint1  lcd_cs_n(0);
+  uint1  lcd_rst_n(0);
+  uint32 cycle(0);
+  uint1  scr_trigger(1);
+  uint8  scr_byte(0);
+  uint1  scr_rs(0);
+$$end
+
+$$if not SIMULATION then
+  uint1 scr_trigger(1);
+  uint8 scr_byte(0);
+  uint1 scr_rs(0);
+  uint1 high(1);
+  sb_io_ddr _(clock <: clock, out_0 <: scr_trigger, out_1 <: high, pin :> lcd_wr_n);
+  sb_io_n   _(o                     <:: scr_byte,    p   :> lcd_d);
+  sb_io     _(clock <: clock, out   <:: scr_rs,      pin :> lcd_rs);
+$$else
+  uint2 twice <: {1b1,scr_trigger};
+  ddr       _(clock <: clock, twice <: twice, out_pin :> lcd_wr_n);
+$$end
+
+  lcd_rst_n   := 1;
+  lcd_cs_n    := 0;
+  scr_trigger := 1; // maintain high, pulse low to send data
+
+$$if SIMULATION then
+  always_before {
+    __display("scr_byte: %x",scr_byte);
+  }
+$$end
+
+  algorithm {
+
+    subroutine wait()
+    {
+$$if SIMULATION then
+      ++: ++:
+$$else
+      uint20 count = 1;
+      while (count != 0) { count = count + 1; }
+$$end
+    }
+
+    uint9 x(0);
+    uint8 y(0);
+
+    leds = 3b001;
+
+    while (~lcd_mode) { }
+
+    leds = 3b000;
+
+    () = lcd_write(8h01,1b1);
+    () <- wait <- ();
+
+    () = lcd_write(8h11,1b1);
+    () <- wait <- ();
+
+    () = lcd_write(8h3a,1b1);
+    () = lcd_write(8h55,1b0);
+    () <- wait <- ();
+
+    () = lcd_write(8h36,1b1);
+    () = lcd_write(8h00,1b0);
+
+    () = lcd_write(8h13,1b1);
+    () <- wait <- ();
+
+    () = lcd_write(8h29,1b1);
+    () <- wait <- ();
+
+    () = lcd_write(8h2b,1b1);
+    () = lcd_write(8h00,1b0);
+    () = lcd_write(8h00,1b0);
+    () = lcd_write(8h01,1b0);
+    () = lcd_write(8h3f,1b0);
+
+    () = lcd_write(8h2a,1b1);
+    () = lcd_write(8h00,1b0);
+    () = lcd_write(8h00,1b0);
+    () = lcd_write(8h00,1b0);
+    () = lcd_write(8hc7,1b0);
+
+    () = lcd_write(8h51,1b1);
+    () = lcd_write(8h00,1b0);
+
+    () = lcd_write(8h2c,1b1);
+
+    while (1) {
+      x = 0;
+      while (x != 320) {
+        y = 0;
+        while (y != 200) {
+          uint16 clr  <:: ~{5b00000,x[1,6],y[1,5]};
+          //             ^ why? invon/off have no effect ... ??
+          uint8  clr_l <: clr[0,8];
+          uint8  clr_h <: clr[8,8];
+          () = lcd_write(clr_h,1b0);
+          () = lcd_write(clr_l,1b0);
+          y        = y + 1;
+        }
+        x = x + 1;
+      }
+    }
+
+  }
+
+$$if SIMULATION then
+  always_after {
+    __display("[%d] lcd_wr_n: %b, lcd_d:%x, lcd_wr_n:%b",cycle,lcd_wr_n,lcd_d,lcd_wr_n);
+    if (cycle > 128) {__finish(); }
+    cycle = cycle + 1;
+  }
+$$end
+
+}

@@ -34,10 +34,7 @@ $$else
 {
 $$end
 
-$$if SIMULATION then
-  uint32 cycle(0);
-$$end
-
+  // QPSRAM RAM
   qpsram_ram ram(
     ram_csn  :> ram_csn,
     ram_clk  :> ram_clk,
@@ -47,55 +44,37 @@ $$end
     ram_io3 <:> ram_io3,
   );
 
+  // UART receiver
+  uart_in ui;
+  uart_receiver urecv(io <:> ui,uart_rx <: uart_rx);
+
   uart_out uo;
   uart_sender usend(
     io      <:> uo,
     uart_tx :>  uart_tx
   );
 
-  ram.in_ready     := 0; // maintain low, pulse high to read/write
-  uo.data_in_ready := 0; // maintain low, pulse high to send
+  uint1  enabled(0);
+  uint24 addr(0);
+  uint32 blip(0);
 
-  algorithm {
+  always {
 
-    uint16 n = 0;
+    ram.in_ready = 0; // maintain low, pulse high to read/write
+    ram.addr     = addr;
+    ram.wenable  = 1; // we write
 
-$$if ICARUS then
-    ram.wenable  = 0;
-$$end
+    leds         = blip;
+    blip         = blip >> 1;
 
-    // write some
-    n = 0;
-    ram.wenable  = 1;
-    while (~n[8,1]) {
-      ram.addr     = n;
-      ram.wdata    = {4hA,n[0,4]};
-      ram.in_ready = 1;
-      while (ram.busy) {}
-      n = n + 1;
-    }
-
-    // read some
-    n = 0;
-    ram.wenable  = 0;
-    while (~n[8,1]) {
-      ram.addr     = n;
-      ram.in_ready = 1;
-      while (ram.busy) {}
-      uo.data_in       = ram.rdata;
-      uo.data_in_ready = 1;
-      while (uo.busy) {}
-      n = n + 1;
+    if (ui.data_out_ready) {
+      ram.in_ready = enabled;
+      ram.wdata    = ui.data_out;
+      addr         = enabled ? (addr + 1) : addr;
+      enabled      = enabled | (ui.data_out == 8hAA);
+      blip         = enabled ? 32hffffffff : 0;
     }
 
   }
-
-$$if SIMULATION then
-  always_after {
-    if (cycle == 20000) { __finish(); }
-    cycle = cycle + 1;
-  }
-$$end
-
 
 }

@@ -125,10 +125,10 @@ unit qpsram_ram(
     io3    <:> ram_io3,
   );
 
-  uint11 wait(0);
+  uint4  wait(0);
   uint5  sending(0);
-  uint3  stage(0);
-  uint3  after(1);
+  uint3  stage(1);
+  uint3  after(0);
   uint1  init(1);
   uint1  send_else_read(0);
   uint1  accept_in(0);
@@ -150,7 +150,7 @@ $$if ICARUS then
         spi.trigger = reset ? 0 : spi.trigger;
         spi.send    = 0;
 $$end
-        stage = wait[10,1] ? after : 0; // counts up to 1024 and goes to after
+        stage = wait[3,1] ? after : 0; // counts up to 8 and goes to after
         wait  = wait + 1;
       }
       case 1: { accept_in = 1; }
@@ -159,8 +159,8 @@ $$end
         spi.send                = sendvec[32,8];
         sendvec                 = sendvec << 8;
         stage                   = 0;    //  wait
-        wait                    = 1024; //_ 2 cycles
-        after                   = sending[0,1] ? (wenable ? 6 : 3) : 2;
+        wait                    = 8; //_ 2 cycles
+        after                   = sending[0,1] ? (wenable ? 5 : 3) : 2;
         sending                 = sending >> 1;
       }
       case 3: {
@@ -168,19 +168,14 @@ $$end
         send_else_read          = 0;
         spi.send                = 0;
         stage                   = 0;    //  wait
-        wait                    = 1017; //_ 9 cycles
-        after                   = 5;
+        wait                    = 1; //_ 9 cycles
+        after                   = 4;
       }
-      //case 4: {
-      //  stage                   = 0;    //  wait
-      //  wait                    = 1019; //_ 7 cycles
-      //  after                   = 5;
-      //}
-      case 5: {
+      case 4: {
         spi.trigger             = 0;
-        stage                   = 6;
+        stage                   = 5;
       }
-      case 6: {
+      case 5: {
         send_else_read          = 0;
         spi.trigger             = 0;
         rdata                   = spi.read;

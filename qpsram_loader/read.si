@@ -34,10 +34,6 @@ $$else
 {
 $$end
 
-$$if SIMULATION then
-  uint32 cycle(0);
-$$end
-
   qpsram_ram ram(
     ram_csn  :> ram_csn,
     ram_clk  :> ram_clk,
@@ -60,21 +56,6 @@ $$end
 
     uint16 n = 0;
 
-$$if ICARUS then
-    ram.wenable  = 0;
-$$end
-
-    // write some
-    n = 0;
-    ram.wenable  = 1;
-    while (~n[8,1]) {
-      ram.addr     = n;
-      ram.wdata    = {4hA,n[0,4]};
-      ram.in_ready = 1;
-      while (ram.busy) {}
-      n = n + 1;
-    }
-
     // read some
     n = 0;
     ram.wenable  = 0;
@@ -89,13 +70,5 @@ $$end
     }
 
   }
-
-$$if SIMULATION then
-  always_after {
-    if (cycle == 20000) { __finish(); }
-    cycle = cycle + 1;
-  }
-$$end
-
 
 }

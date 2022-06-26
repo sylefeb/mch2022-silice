@@ -5,10 +5,11 @@
 $include('../common/qpsram2x.si')
 
 $$if ICE40 then
-import('../../Silice/projects/common/plls/icebrkr_25.v')
+import('../../Silice/projects/common/plls/icebrkr_50.v')
 $$end
 
-$$uart_in_clock_freq_mhz = 25
+$$uart_bauds = 500000
+$$uart_in_clock_freq_mhz = 50
 $include('../../Silice/projects/common/uart.si')
 
 unit main(
@@ -48,14 +49,10 @@ $$end
   uart_in ui;
   uart_receiver urecv(io <:> ui,uart_rx <: uart_rx);
 
-  uart_out uo;
-  uart_sender usend(
-    io      <:> uo,
-    uart_tx :>  uart_tx
-  );
-
   uint1  enabled(0);
+  uint1  writing(0);
   uint24 addr(0);
+  uint3  get_addr(3b111);
   uint32 blip(0);
 
   always {
@@ -68,11 +65,22 @@ $$end
     blip         = blip >> 1;
 
     if (ui.data_out_ready) {
-      ram.in_ready = enabled;
+      // write if enabled and addr received
+      ram.in_ready = enabled & ~get_addr[0,1];
       ram.wdata    = ui.data_out;
-      addr         = enabled ? (addr + 1) : addr;
-      enabled      = enabled | (ui.data_out == 8hAA);
+      writing      = ram.in_ready;
+      // read address if enabled
+      addr         = get_addr[0,1] ? {addr[0,16],ui.data_out} : addr;
+      get_addr     = enabled ? get_addr>>1 : get_addr;
       blip         = enabled ? 32hffffffff : 0;
+      // enable on tag
+      enabled      = enabled | (ui.data_out == 8hAA);
+    } else {
+      if (writing & ~ram.busy) {
+        // done, increment address
+        addr    = addr + 1;
+        writing = 0;
+      }
     }
 
   }

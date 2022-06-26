@@ -60,10 +60,6 @@ $$end
 
     uint16 n = 0;
 
-$$if ICARUS then
-    ram.wenable  = 0;
-$$end
-
     // write some
     n = 0;
     ram.wenable  = 1;
@@ -94,6 +90,9 @@ $$if SIMULATION then
   always_after {
     if (cycle == 20000) { __finish(); }
     cycle = cycle + 1;
+$$if ICARUS then
+    if (reset) { ram.wenable = 0; }
+$$end
   }
 $$end
 

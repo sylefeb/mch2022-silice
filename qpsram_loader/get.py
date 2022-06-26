@@ -4,16 +4,14 @@ import sys
 import os
 import glob
 
-if len(sys.argv) != 4:
-  print("send.py <port> <base> <file>")
+if len(sys.argv) != 3:
+  print("get.py <port> <base>")
   sys.exit()
 
 addr = int(sys.argv[2], 0)
 print("base address is ",addr)
 
-ser = serial.Serial(sys.argv[1],500000)
-
-f = open(sys.argv[3],"rb")
+ser = serial.Serial(sys.argv[1],115200, timeout=1)
 
 # send start tag
 packet = bytearray()
@@ -33,14 +31,17 @@ packet = bytearray()
 packet.append(addr&255)
 ser.write(packet)
 
-# send data
-packet = bytearray()
+# read data
+i = 0
+ba = bytearray()
 while True:
-  b = f.read(1)
-  if not b:
+  b = ser.read(1)
+  if len(b) == 0:
     break
-  packet.append(int.from_bytes(b,byteorder='little'))
-
-ser.write(packet)
-
-ser.close()
+  print("{:02X}".format(int.from_bytes(b,byteorder='little')),end=" ")
+  ba.append(int.from_bytes(b,byteorder='little'))
+  i = i + 1
+  if i == 16:
+    i = 0
+    print(" ",bytes(ba))
+    ba = bytearray()

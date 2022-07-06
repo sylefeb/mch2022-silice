@@ -35,11 +35,17 @@ ser.write(packet)
 
 # send data
 packet = bytearray()
+n = 0
 while True:
   b = f.read(1)
   if not b:
     break
   packet.append(int.from_bytes(b,byteorder='little'))
+  n = n + 1
+  if n == 65536:
+    ser.write(packet)
+    packet = bytearray()
+    n = 0
 
 ser.write(packet)
 

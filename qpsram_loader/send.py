@@ -13,6 +13,7 @@ print("base address is ",addr)
 
 ser = serial.Serial(sys.argv[1],500000)
 
+totbytes = os.path.getsize(sys.argv[3])
 f = open(sys.argv[3],"rb")
 
 # send start tag
@@ -36,6 +37,7 @@ ser.write(packet)
 # send data
 packet = bytearray()
 n = 0
+ntot = 0
 while True:
   b = f.read(1)
   if not b:
@@ -44,6 +46,8 @@ while True:
   n = n + 1
   if n == 65536:
     ser.write(packet)
+    ntot = ntot + n
+    print("%.1f" % (ntot*100/totbytes),"% ")
     packet = bytearray()
     n = 0
 

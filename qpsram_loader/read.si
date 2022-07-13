@@ -5,12 +5,12 @@
 $include('../common/qpsram2x.si')
 
 $$if ICE40 then
-import('../../Silice/projects/common/plls/icebrkr_25.v')
+import('../common/plls/icebrkr_25.v')
 $$end
 
 $$uart_bauds = 115200
 $$uart_in_clock_freq_mhz = 25
-$include('../../Silice/projects/common/uart.si')
+$include('../common/uart.si')
 
 unit main(
   output uint3 leds,

@@ -2,14 +2,22 @@
 // https://github.com/sylefeb/Silice
 // MIT license, see LICENSE_MIT in Silice repo root
 
+/*
+
+Simple quad PSRAM test.
+
+Writes 256 bytes to PSRAM, reads them back and sends them through UART
+
+*/
+
+
+// QPSRAM driver
 $include('../common/qpsram2x.si')
-
-$$if ICE40 then
-import('../../Silice/projects/common/plls/icebrkr_25.v')
-$$end
-
+// 25 MHz clock
+import('../common/icebrkr_25.v')
+// import UART
 $$uart_in_clock_freq_mhz = 25
-$include('../../Silice/projects/common/uart.si')
+$include('../common/uart.si')
 
 unit main(
   output uint3 leds,
@@ -21,23 +29,15 @@ unit main(
   inout  uint1 ram_io3,
   output uint1 ram_clk,
   output uint1 ram_csn,
-)
-// clocking (pll) and reset
-$$if ICE40 then
-<@clock_pll> {
+) <@clock_pll> {
+  // ^^^^ design uses PLL generated clock
+  //                  vvv
   uint1 clock_pll = uninitialized;
   pll pllgen(
     clock_in  <: clock,
     clock_out :> clock_pll,
   );
-$$else
-{
-$$end
-
-$$if SIMULATION then
-  uint32 cycle(0);
-$$end
-
+  // instantiates QPSRAM
   qpsram_ram ram(
     ram_csn  :> ram_csn,
     ram_clk  :> ram_clk,
@@ -46,7 +46,7 @@ $$end
     ram_io2 <:> ram_io2,
     ram_io3 <:> ram_io3,
   );
-
+  // UART sender
   uart_out uo;
   uart_sender usend(
     io      <:> uo,
@@ -85,16 +85,5 @@ $$end
     }
 
   }
-
-$$if SIMULATION then
-  always_after {
-    if (cycle == 20000) { __finish(); }
-    cycle = cycle + 1;
-$$if ICARUS then
-    if (reset) { ram.wenable = 0; }
-$$end
-  }
-$$end
-
 
 }

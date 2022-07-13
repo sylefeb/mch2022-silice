@@ -9,11 +9,11 @@
 // NOTE: this is largely based on Silice/projects/spiflash/spiflash2x.si
 //       see this design for more info and simulation
 
-import('../../Silice/projects/spiflash/ddr_clock.v')
+import('ddr_clock.v')
 
 $$if not SIMULATION then
-import('../../Silice/projects/common/ice40_sb_io_inout.v')
-import('../../Silice/projects/common/ice40_sb_io.v')
+import('ice40_sb_io_inout.v')
+import('ice40_sb_io.v')
 $$end
 
 algorithm qpsram_qspi(

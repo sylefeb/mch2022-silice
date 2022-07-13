@@ -2,45 +2,41 @@
 // https://github.com/sylefeb/Silice
 // MIT license, see LICENSE_MIT in Silice repo root
 
-$$if not SIMULATION then
-import('../../Silice/projects/common/ice40_sb_io.v')
-import('../../Silice/projects/common/ice40_sb_io_ddr.v')
-$$else
-import('../../Silice/projects/common/ddr.v')
-$$end
+/*
 
-unit sb_io_n(input auto o,output uint8 p)
-///                              ^^^^^ TODO FIXME sameas(o) should work
+Simple LCD initialization and drawing test.
+
+*/
+
+import('../common/ice40_sb_io.v')
+import('../common/ice40_sb_io_ddr.v')
+
+// wrapper around single bit sb_io primitive
+unit sb_io_n(input auto o,output sameas(o) p)
 {
   $$for i=0,widthof('o')-1 do
   sb_io _(clock <: clock, out <: o[$i$,1], pin :> p[$i$,1]);
   $$end
 }
 
-unit parallel_screen( // for ILI9341, parallel
+// For ILI9341, parallel screen interface
+unit parallel_screen(
   input   uint1 start,    input  uint1 data_or_command, input  uint8 byte,
   output  uint8 screen_d, output uint1 screen_dc, output uint1 screen_wrn
 ) {
-
-$$if ICE40 then
   uint1 scr_trigger(1);
   uint8 scr_byte(0);
   uint1 scr_dc(0);
   uint1 high(1);
+  // sends data through DDR, so one byte can be sent every cycle (fast!)
   sb_io_ddr _(clock <: clock, out_0 <: scr_trigger, out_1 <: high, pin :> screen_wrn);
   sb_io_n   _(o                     <: scr_byte,    p   :> screen_d);
   sb_io     _(clock <: clock, out   <: scr_dc,      pin :> screen_dc);
-$$else
-  uint2 twice <: {1b1,scr_trigger};
-  ddr       _(clock <: clock, twice <: twice, out_pin :> lcd_wr_n);
-$$end
-
   always {
     scr_byte    =  byte;
     scr_dc      =  data_or_command;
     scr_trigger = ~start;
   }
-
 }
 
 circuitry lcd_write(input byte, input cmd_else_dta)
@@ -48,12 +44,11 @@ circuitry lcd_write(input byte, input cmd_else_dta)
   screen.byte = byte;
   screen.data_or_command = ~cmd_else_dta;
   screen.start = 1;
-++:
+++: // wait one cycle
 }
 
 unit main(
   output uint3 leds,
-$$if not SIMULATION then
   output uint8 lcd_d,
   output uint1 lcd_rs,
   output uint1 lcd_wr_n,
@@ -63,18 +58,7 @@ $$if not SIMULATION then
   input  uint1 lcd_fmark,
   input  uint1 uart_rx,
   output uint1 uart_tx,
-$$end
 ) {
-
-$$if SIMULATION then
-  uint1  lcd_mode(1);
-  uint1  lcd_rs(1);
-  uint8  lcd_d(0);
-  uint1  lcd_wr_n(0);
-  uint1  lcd_cs_n(0);
-  uint1  lcd_rst_n(0);
-  uint32 cycle(0);
-$$end
 
   parallel_screen screen(
     screen_d :> lcd_d, screen_dc :> lcd_rs, screen_wrn :> lcd_wr_n
@@ -84,22 +68,13 @@ $$end
   lcd_cs_n     := 0;
   screen.start := 0;
 
-$$if SIMULATION then
-  always_before {
-    __display("scr_byte: %x",scr_byte);
-  }
-$$end
-
   algorithm {
 
+    // a subroutine to wait a long time
     subroutine wait()
     {
-$$if SIMULATION then
-      ++: ++:
-$$else
       uint20 count = 1;
       while (count != 0) { count = count + 1; }
-$$end
     }
 
     uint9 x(0);
@@ -110,6 +85,11 @@ $$end
     while (~lcd_mode) { }
 
     leds = 3b000;
+
+    // NOTE: if done efficiently, the sequence below would normally be
+    // encoded in a small BRAM with a compact design going through the BRAM
+    // and sending in sequence with lcd_write. However, I am here using
+    // Silice prototyping features for convenience.
 
     () = lcd_write(8h01,1b1);
     () <- wait <- ();
@@ -147,6 +127,7 @@ $$end
 
     () = lcd_write(8h2c,1b1);
 
+    // we forever generate a simple pattern on screen
     while (1) {
       x = 0;
       while (x != 320) {
@@ -165,13 +146,5 @@ $$end
     }
 
   }
-
-$$if SIMULATION then
-  always_after {
-    __display("[%d] lcd_wr_n: %b, lcd_d:%x, lcd_wr_n:%b",cycle,lcd_wr_n,lcd_d,lcd_wr_n);
-    if (cycle > 128) {__finish(); }
-    cycle = cycle + 1;
-  }
-$$end
 
 }

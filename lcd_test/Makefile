@@ -1,12 +1,13 @@
+mch2022: BUILD_mch2022/build.bin prepare program
 
-mch2022: main.si
-	silice-make.py -s main.si -b $@ -p basic,uart,lcd -o BUILD_$(subst :,_,$@)
+program: BUILD_mch2022/build.bin
+	../common/webusb_fpga.py BUILD_mch2022/build.bin
 
-verilator: main.si
-	silice-make.py -s main.si -b $@ -p basic -o BUILD_$(subst :,_,$@)
+BUILD_mch2022/build.bin: main.si
+	silice-make.py -s main.si -b mch2022 -p basic,uart,lcd -o BUILD_mch2022
 
-icarus: main.si
-	silice-make.py -s main.si -b $@ -p basic -o BUILD_$(subst :,_,$@)
+prepare:
+	pushd . ; cd ../common ; ./download_all.sh ; popd
 
 clean:
 	rm -rf BUILD_*

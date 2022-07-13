@@ -8,45 +8,10 @@ Simple LCD initialization and drawing test.
 
 */
 
-import('../common/ice40_sb_io.v')
-import('../common/ice40_sb_io_ddr.v')
+// LCD screen
+$include('../common/lcd.si')
 
-// wrapper around single bit sb_io primitive
-unit sb_io_n(input auto o,output sameas(o) p)
-{
-  $$for i=0,widthof('o')-1 do
-  sb_io _(clock <: clock, out <: o[$i$,1], pin :> p[$i$,1]);
-  $$end
-}
-
-// For ILI9341, parallel screen interface
-unit parallel_screen(
-  input   uint1 start,    input  uint1 data_or_command, input  uint8 byte,
-  output  uint8 screen_d, output uint1 screen_dc, output uint1 screen_wrn
-) {
-  uint1 scr_trigger(1);
-  uint8 scr_byte(0);
-  uint1 scr_dc(0);
-  uint1 high(1);
-  // sends data through DDR, so one byte can be sent every cycle (fast!)
-  sb_io_ddr _(clock <: clock, out_0 <: scr_trigger, out_1 <: high, pin :> screen_wrn);
-  sb_io_n   _(o                     <: scr_byte,    p   :> screen_d);
-  sb_io     _(clock <: clock, out   <: scr_dc,      pin :> screen_dc);
-  always {
-    scr_byte    =  byte;
-    scr_dc      =  data_or_command;
-    scr_trigger = ~start;
-  }
-}
-
-circuitry lcd_write(input byte, input cmd_else_dta)
-{
-  screen.byte = byte;
-  screen.data_or_command = ~cmd_else_dta;
-  screen.start = 1;
-++: // wait one cycle
-}
-
+// Main (top) design
 unit main(
   output uint3 leds,
   output uint8 lcd_d,
@@ -56,90 +21,41 @@ unit main(
   output uint1 lcd_rst_n(1),
   input  uint1 lcd_mode,
   input  uint1 lcd_fmark,
-  input  uint1 uart_rx,
-  output uint1 uart_tx,
 ) {
 
-  parallel_screen screen(
-    screen_d :> lcd_d, screen_dc :> lcd_rs, screen_wrn :> lcd_wr_n
-  );
+  lcd_driver lcd(<:auto:>);
+  //             ^^^^^^^^ use autobinding for the pins
 
-  lcd_rst_n    := 1;
-  lcd_cs_n     := 0;
-  screen.start := 0;
+  lcd.valid := 0; // pulse to send
 
   algorithm {
-
-    // a subroutine to wait a long time
-    subroutine wait()
-    {
-      uint20 count = 1;
-      while (count != 0) { count = count + 1; }
-    }
 
     uint9 x(0);
     uint8 y(0);
 
-    leds = 3b001;
-
-    while (~lcd_mode) { }
-
-    leds = 3b000;
-
-    // NOTE: if done efficiently, the sequence below would normally be
-    // encoded in a small BRAM with a compact design going through the BRAM
-    // and sending in sequence with lcd_write. However, I am here using
-    // Silice prototyping features for convenience.
-
-    () = lcd_write(8h01,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h11,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h3a,1b1);
-    () = lcd_write(8h55,1b0);
-    () <- wait <- ();
-
-    () = lcd_write(8h36,1b1);
-    () = lcd_write(8h00,1b0);
-
-    () = lcd_write(8h13,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h29,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h2b,1b1);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h01,1b0);
-    () = lcd_write(8h3f,1b0);
-
-    () = lcd_write(8h2a,1b1);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8hc7,1b0);
-
-    () = lcd_write(8h51,1b1);
-    () = lcd_write(8h00,1b0);
-
-    () = lcd_write(8h2c,1b1);
+    // wait for screen to be ready
+    while (~lcd.ready) { }
 
     // we forever generate a simple pattern on screen
     while (1) {
       x = 0;
       while (x != 320) {
         y = 0;
-        while (y != 200) {
-          uint16 clr  <:: ~{5b00000,x[1,6],y[1,5]};
-          //             ^ why? invon/off have no effect ... ??
+        while (y != 240) {
+          uint5  r    <:: x[1,5];
+          uint6  g    <:: y[0,6];
+          uint5  b    <:: 0;
+          uint16 clr  <:: {g[0,3],r,b,g[3,3]};
           uint8  clr_l <: clr[0,8];
           uint8  clr_h <: clr[8,8];
-          () = lcd_write(clr_h,1b0);
-          () = lcd_write(clr_l,1b0);
-          y        = y + 1;
+          // each pixel is two bytes
+          lcd.data  = clr_l;
+          lcd.valid = 1;
+      ++: // wait one cycle before sending second byte
+          lcd.data  = clr_h;
+          lcd.valid = 1;
+          // next pixel
+          y         = y + 1;
         }
         x = x + 1;
       }

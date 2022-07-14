@@ -57,7 +57,7 @@ unit lcd_driver(
 ) {
 
   // screen interface
-  parallel_screen screen(
+  parallel_screen screen<reginputs>(
     screen_d :> lcd_d, screen_dc :> lcd_rs, screen_wrn :> lcd_wr_n
   );
 
@@ -91,7 +91,7 @@ unit lcd_driver(
     () <- wait <- ();
 
     () = lcd_write(8h36,1b1);
-    () = lcd_write(8h00,1b0);
+    () = lcd_write(8h40,1b0);
 
     () = lcd_write(8h13,1b1);
     () <- wait <- ();

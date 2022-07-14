@@ -11,24 +11,26 @@ import('../common/icebrkr_25.v')
 riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
                  output uint1  on_rgb,     // pulses high when CPU writes rgb
                  output uint32 leds,       // set on-board LEDs
-                 output uint1  on_leds     // pulses high when CPU writes leds
+                 output uint1  on_leds,    // pulses high when CPU writes leds
+                 input  uint32 ready,      // true when screen is ready
                 ) <
-                  mem=8192,
+                  mem=4096,
                   core="ice-v-dual", // dual core please
                   ICEV_FAST_SHIFT=1, // fast shifts (barrel shifter)
+                  ICEV_ALU_LATCH=1,  // improves fmax by latching ALU mux
                   O=3                // compile with -O3
                 > {
 
   // =============== firmware in C language ===========================
-/*
-  #define FIRE_W 64
-  #define FIRE_H 64
+  #define FIRE_W 64 //_ 320 / 5
+  #define FIRE_H 48 //_ 240 / 5
 
-  //_ framebuffer
+  //_ framebuffer: we run at low resolution since this code has to fit entirely
+  //               in BRAM (for full res we'd have to use the UP5K SPRAM)
   unsigned char tbl[FIRE_W*FIRE_H + 8];
   //                                ^ padding
 
-  //_ 32 xRGB entries ('fire' palette)
+  //_ 32x RGB entries ('fire' palette)
   unsigned char pal[] = {
     0,0x04,0x04,0x04, 0,0x1c,0x04,0x04, 0,0x2c,0x0c,0x04, 0,0x44,0x0c,0x04,
     0,0x54,0x14,0x04, 0,0x64,0x1c,0x04, 0,0x74,0x1c,0x04, 0,0x9c,0x2c,0x04,
@@ -44,14 +46,19 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
   {
     while (1) {
       for (int u=0;u<FIRE_W;u++) {
-        unsigned char *col = tbl + u;
-        for (int v=0;v<FIRE_H;++v) {
-          // palette lookup
-          int clr  = ((*col)>>2)&31;
-          col     += FIRE_W;
-          int *ptr = (int*)(pal) + clr;
-          // send to screen
-          rgb(*ptr);
+        // send each column 5 times
+        for (int su=0;su<5;++su) {
+          unsigned char *col = tbl + u;
+          for (int v=0;v<FIRE_H;++v) {
+            // palette lookup
+            int clr  = ((*col)>>2)&31;
+            col     += FIRE_W;
+            int *ptr = (int*)(pal) + clr;
+            // send each pixel 5 times
+            for (int sv=0;sv<5;++sv) {
+              rgb(*ptr);
+            }
+          }
         }
       }
     }
@@ -83,21 +90,15 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
       }
     }
   }
-*/
+
   //_ C main
   void main() {
-    /*
+    leds(0);
+    while (ready() == 0) {} // wait for ready signal
     if (core_id() == 0) {
       draw_fire();
     } else {
       update_fire();
-    }
-    */
-    leds(3);
-    for (int i=0;i<320;++i) {
-    for (int j=0;j<240;++j) {
-      rgb(i + (j<<8));
-    }
     }
   }
 
@@ -106,7 +107,7 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
 
 // now we are creating the hardware hosting the CPU
 unit main(
-  output uint8  leds,
+  output uint3 leds,
   output uint8 lcd_d,
   output uint1 lcd_rs,
   output uint1 lcd_wr_n,
@@ -114,11 +115,6 @@ unit main(
   output uint1 lcd_rst_n(1),
   input  uint1 lcd_mode,
   input  uint1 lcd_fmark,
-  input  uint1 espspi_mosi,
-  output uint1 espspi_miso,
-  input  uint1 espspi_clk,
-  input  uint1 espspi_cs_n,
-  output uint1 espirq_n,
 ) <@clock_pll> {
   // ^^^^ design uses a PLL generated clock
   //                    vvv
@@ -130,7 +126,7 @@ unit main(
 
   // screen driver
   lcd_driver lcd(<:auto:>);
-  //             ^^^^^^^^ use autobinding for the pins
+  //                        ^^^^^^^^ use autobinding for the pins
 
   // instantiates our CPU as defined above
   cpu_drawer cpu;
@@ -140,9 +136,10 @@ unit main(
   uint2  pix_sending(2b00);       // sending? (11 => 01 => 00 done)
 
   always {
-    uint1 can_send <:: pix_sending[0,1] & lcd.ready;
+    uint1 can_send <:: pix_sending[0,1] & :lcd.ready;
 
     leds          = cpu.leds;
+    cpu.ready     = {32{lcd.ready}};
 
     lcd.valid     = can_send;
     lcd.data      = pix_data[0,8];
@@ -150,10 +147,9 @@ unit main(
     if (cpu.on_rgb) {
       // CPU requests RGB write
       // grab pixel data (convert RGB 24 bits to 16 bits)
-      uint5  r     <: cpu.rgb[ 3, 5];
-      uint6  g     <: cpu.rgb[10, 6];
-      uint5  b     <: cpu.rgb[19, 5];
-      uint16 clr   <: {g[0,3],r,b,g[3,3]};
+      uint5  r     <: cpu.rgb[11, 5];
+      uint6  g     <: cpu.rgb[18, 6];
+      uint5  b     <: cpu.rgb[27, 5];
       pix_data    = {g[0,3],r,b,g[3,3]};
       // initiate sending
       pix_sending = 2b11;

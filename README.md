@@ -14,4 +14,4 @@ Connect the badge, enter the project directory (for instance `lcd_test`) and typ
 ## Credits:
 - Thanks to the FPGA badge team for fun, guidance and inspiring projects https://github.com/badgeteam/mch2022-firmware-ice40
 - Thanks to the badge team for an awesome badge https://github.com/badgeteam/
-- Not forgetting the FPGA upload tool: https://github.com/badgeteam/mch2022-tools
+- FPGA upload tool: https://github.com/badgeteam/mch2022-tools

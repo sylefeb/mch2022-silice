@@ -14,7 +14,7 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
                  output uint1  on_leds,    // pulses high when CPU writes leds
                  input  uint32 ready,      // true when screen is ready
                 ) <
-                  mem=4096,
+                  mem=6144,
                   core="ice-v-dual", // dual core please
                   ICEV_FAST_SHIFT=1, // fast shifts (barrel shifter)
                   ICEV_ALU_LATCH=1,  // improves fmax by latching ALU mux
@@ -22,13 +22,13 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
                 > {
 
   // =============== firmware in C language ===========================
-  #define FIRE_W 64 //_ 320 / 5
-  #define FIRE_H 48 //_ 240 / 5
+  #define FIRE_W 80 //_ 320 / 4
+  #define FIRE_H 60 //_ 240 / 4
 
   //_ framebuffer: we run at low resolution since this code has to fit entirely
   //               in BRAM (for full res we'd have to use the UP5K SPRAM)
   unsigned char tbl[FIRE_W*FIRE_H + 8];
-  //                                ^ padding
+  //                                ^ padding to avoid oob access on wind effect
 
   //_ 32x 6bits RGB entries ('fire' palette)
   unsigned char pal[] = {
@@ -46,16 +46,16 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
   {
     while (1) {
       for (int u=0;u<FIRE_W;u++) {
-        // send each column 5 times
-        for (int su=0;su<5;++su) {
+        // send each column 4 times
+        for (int su=0;su<4;++su) {
           unsigned char *col = tbl + u;
           for (int v=0;v<FIRE_H;++v) {
             // palette lookup
             int clr  = ((*col)>>2)&31;
             col     += FIRE_W;
             int *ptr = ((int*)pal) + clr;
-            // send each pixel 5 times
-            for (int sv=0;sv<5;++sv) {
+            // send each pixel 4 times
+            for (int sv=0;sv<4;++sv) {
               rgb(*ptr);
             }
           }
@@ -67,26 +67,29 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
   //_ update the fire framebuffer
   void update_fire()
   {
-    int rng  = 31421;  // random number generator seed
+    unsigned int rng  = 31421;  // random number generator seed
     while (1) {
       // move up
       unsigned char *below   = tbl;
       unsigned char *current = tbl + FIRE_W;
       for ( ; current < tbl + FIRE_W*FIRE_H ; ++current ) {
         int clr = 0;
-        if ((*below) > 1) {
+        if ((*below) > 64) {
           clr = (*below)-(rng&7);
-          if (clr < 0) clr = 0;
+        } else if ((*below) > 7) {
+          clr = (*below)-(rng&3);
+        } else if ((*below) > 1) {
+          clr = (*below)-(rng&1);
         }
-        rng = (rng<<3) + ((rng>>3) ^ (int)current);
+        rng = ((rng<<5) ^ 6927) + ((rng>>5) ^ 71993);
         *(current + (rng&3)) = clr; // NOTE: table padding avoids
-                                    //       out of bounds access
+        //           ^^^^^ wind     //       out of bounds access
         ++ below;
       }
       // keep the heat on
       unsigned char *ptr = tbl;
       for (int v=0;v<FIRE_W;v++) {
-        rng = (rng<<5) + ((rng>>5) ^ (int)ptr);
+        rng = ((rng<<5) ^ 71993) + ((rng>>5) ^ 6927);
         (*ptr++) = 120 + (rng&7);
       }
     }

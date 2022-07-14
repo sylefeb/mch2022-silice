@@ -10,6 +10,7 @@ wget $OPT $SILICE_URL/projects/common/ice40_sb_io.v
 wget $OPT $SILICE_URL/projects/common/ice40_sb_io_ddr.v
 wget $OPT $SILICE_URL/projects/common/ice40_sb_io_inout.v
 wget $OPT $SILICE_URL/projects/common/ddr.v
+wget $OPT $SILICE_URL/projects/common/plls/icebrkr_20.v
 wget $OPT $SILICE_URL/projects/common/plls/icebrkr_25.v
 wget $OPT $SILICE_URL/projects/common/plls/icebrkr_50.v
 wget $OPT $SILICE_URL/projects/common/plls/icebrkr_30.v

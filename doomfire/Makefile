@@ -1,4 +1,5 @@
-mch2022: BUILD_mch2022/build.bin program
+mch2022: clean BUILD_mch2022/build.bin program
+	cp BUILD_mch2022/build.bin hatchery/bitstream.bin
 
 program: BUILD_mch2022/build.bin prepare
 	../common/webusb_fpga.py BUILD_mch2022/build.bin

@@ -9,8 +9,8 @@
 	"description":"A RISC-V Doom fire for cold nights",
 	"version":1,
 	"files":[
-		{"name":"README.md","url":"","size":17},
-		{"name":"icon.png","url":"","size":2169},
-		{"name":"bitstream.bin","url":"","size":104090}
+		{"name":"README.md","url":"https://github.com/sylefeb/mch2022-silice/blob/main/doomfire/doomfire/README.md","size":17},
+		{"name":"icon.png","url":"https://github.com/sylefeb/mch2022-silice/blob/main/doomfire/doomfire/icon.png","size":2169},
+		{"name":"bitstream.bin","url":"https://github.com/sylefeb/mch2022-silice/blob/main/doomfire/doomfire/bitstream.bin","size":104090}
 	]
 }

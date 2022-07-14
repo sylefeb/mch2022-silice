@@ -1,8 +1,7 @@
-// This is entirely based on the designs by @tnt and @Mecrisp from the
-// badge respository: https://github.com/badgeteam/mch2022-firmware-ice40
-//
-// See in particular:
-// https://github.com/badgeteam/mch2022-firmware-ice40/blob/master/projects/RISCV-Playground/rtl/riscv_playground.v
+// This is directly derived from the wrapper by @Mecrisp, see in particular:
+//   https://github.com/badgeteam/mch2022-firmware-ice40/blob/master/projects/RISCV-Playground/rtl/riscv_playground.v
+// The main building blocks are provided in the badge respository:
+//   https://github.com/badgeteam/mch2022-firmware-ice40
 
 module spi_file(
     // pins
@@ -30,7 +29,7 @@ module spi_file(
     spi_dev_core _communication (
 
         .clk (clk),
-        .rst (~resetq),
+        .rst (resetq),
 
         .usr_mosi_data (usr_mosi_data),
         .usr_mosi_stb  (usr_mosi_stb),
@@ -60,7 +59,7 @@ module spi_file(
 
     spi_dev_proto _protocol (
         .clk (clk),
-        .rst (~resetq),
+        .rst (resetq),
 
         // Connection to the actual SPI module:
 
@@ -102,7 +101,7 @@ module spi_file(
         .INTERFACE("STREAM")
     ) _fread (
         .clk (clk),
-        .rst (~resetq),
+        .rst (resetq),
 
         // SPI interface
         .pw_wdata     (pw_wdata),

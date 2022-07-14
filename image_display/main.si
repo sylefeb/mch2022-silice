@@ -65,8 +65,8 @@ unit main(
   uint11 n(0);
 
   always_before {
+    lcd.valid              = 0;
     sf.file_request_valid  = 0;
-    pixels.wenable         = 0;
     // the file offset is always given by the iteration counter
     sf.file_request_offset = {iter,10b0};
     // if data is received, store in BRAM
@@ -87,17 +87,21 @@ unit main(
     while (iter != 75) {
       // one byte per pixel, 320x240, 1024 pixels at each iteration
       // request some data from the file
+      leds = 1;
       while (1) {
-        // wait for SPI file interface to be ready
+        sf.file_request_valid = ~sf.file_request_ready; // start!
+        // wait for SPI file interface to report ready
         if (sf.file_request_ready) {
-          sf.file_request_valid = 1; // start!
           break;
         }
       }
+      leds = 2;
       // wait for all data to be received
       while (~file_recv_count[10,1]) { } // == 1024
+      leds = 0;
       // send to screen
       n = 0;
+      pixels.wenable = 0;
       pixels.addr = 0;
       while (~n[10,1]) {
         uint5  r     <: pixels.rdata[3,5];

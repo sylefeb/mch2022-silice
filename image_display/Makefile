@@ -1,7 +1,7 @@
 mch2022: BUILD_mch2022/build.bin program
 
 program: BUILD_mch2022/build.bin prepare
-	../common/webusb_fpga.py BUILD_mch2022/build.bin
+	../common/webusb_fpga.py BUILD_mch2022/build.bin 0xbfbfbfbf:image.raw
 
 BUILD_mch2022/build.bin: main.si prepare
 	silice-make.py -s main.si -b mch2022 -p basic,lcd,espspi -o BUILD_mch2022

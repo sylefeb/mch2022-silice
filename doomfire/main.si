@@ -2,6 +2,9 @@
 // https://github.com/sylefeb/Silice
 // @sylefeb 2022
 
+// For details about the Doom fire algorithm itself, see e.g.
+// https://fabiensanglard.net/doom_fire_psx/
+
 // include the screen driver
 $include('../common/lcd.si')
 // PLL

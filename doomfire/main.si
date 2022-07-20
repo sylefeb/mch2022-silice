@@ -8,7 +8,7 @@
 // include the screen driver
 $include('../common/lcd.si')
 // PLL
-import('../common/icebrkr_25.v')
+import('../common/ext/icebrkr_25.v')
 
 // CPU declaration
 riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)

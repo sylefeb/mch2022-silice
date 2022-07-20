@@ -2,8 +2,8 @@
 // MIT license, see LICENSE_MIT in Silice repo root
 // https://github.com/sylefeb/Silice
 
-import('../common/ice40_sb_io.v')
-import('../common/ice40_sb_io_ddr.v')
+import('../common/ext/ice40_sb_io.v')
+import('../common/ext/ice40_sb_io_ddr.v')
 
 // wrapper around single bit sb_io primitive
 unit sb_io_n(input auto o,output sameas(o) p)

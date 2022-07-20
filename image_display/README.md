@@ -4,7 +4,7 @@ This demo shows how to load data from a file on the SDcard using the ESP32 file
 loading service provided to the FPGA through the SPI interface.
 
 The main design is written in Silice, using the core functionality that is written in Verilog.
-The wrapper around the Verilog designs for loading through SPI is in [spi_file.v](spi_file.v).
+The wrapper around the Verilog designs for loading through SPI is in [spi_file.v](../common/spi_file.v).
 
 ## Testing
 
@@ -13,7 +13,7 @@ the `webusb_fpga` tool to send it alongside the bitstream.
 
 To place the file on the SDcard, copy `image.raw` at the root and give it the name `fpga_bfbfbfbf.dat`.
 Then the badge can be programmed without sending the file:
-```../common/webusb_fpga.py BUILD_mch2022/build.bin```
+```../common/ext/webusb_fpga.py BUILD_mch2022/build.bin```
 
 ## Image format
 

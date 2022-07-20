@@ -4,18 +4,19 @@
 
 /*
 
-
+Uses ESP32 - FPGA SPI communication module to retrive an image
+from a file and display it on screen.
 
 */
 
 // 30 MHz clock
-import('../common/icebrkr_30.v')
+import('../common/ext/icebrkr_30.v')
 // ESP32 SPI file interface
-import('spi_file.v')
-append('ext/spi_dev_core.v')
-append('ext/spi_dev_proto.v')
-append('ext/spi_dev_fread.v')
-append('ext/ram_sdp.v')
+import('../common/spi_file.v')
+append('../common/ext/spi_dev_core.v')
+append('../common/ext/spi_dev_proto.v')
+append('../common/ext/spi_dev_fread.v')
+append('../common/ext/ram_sdp.v')
 // LCD screen
 $include('../common/lcd.si')
 

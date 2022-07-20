@@ -5,6 +5,8 @@ For setting up Silice please refer [to its repository](https://github.com/sylefe
 
 The Silice `bin/` directory has to be in the path, as well as yosys and nextpnr-ice40 (using latest versions is recommended).
 
+> I also made a small GPU and accompanying graphical demos that run on the badge. [Check it out here!](https://github.com/sylefeb/tinygpus)
+
 ## Building something
 
 Connect the badge, enter the project directory (for instance `lcd_test`) and type `make`. Enjoy!

@@ -5,6 +5,8 @@ For setting up Silice please refer [to its repository](https://github.com/sylefe
 
 The Silice `bin/` directory has to be in the path, as well as yosys and nextpnr-ice40 (using latest versions is recommended).
 
+> I am writing a new tutorial for Silice which [can be find here](https://github.com/sylefeb/Silice/blob/draft/learn-silice/README.md). It also contains a brief introduction to hardware design on FPGA.
+
 > I also made a small GPU and accompanying graphical demos that run on the badge. [Check it out here!](https://github.com/sylefeb/tinygpus)
 
 ## Building something

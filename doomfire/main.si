@@ -13,9 +13,9 @@ import('../common/ext/icebrkr_25.v')
 // CPU declaration
 riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
                  output uint1  on_rgb,     // pulses high when CPU writes rgb
+                 input  uint32 ready,      // true when screen is ready
                  output uint32 leds,       // set on-board LEDs
                  output uint1  on_leds,    // pulses high when CPU writes leds
-                 input  uint32 ready,      // true when screen is ready
                 ) <
                   mem=6144,
                   core="ice-v-dual", // dual core please
@@ -100,7 +100,7 @@ riscv cpu_drawer(output uint32 rgb,        // send a pixel (RGB 24 bits)
 
   //_ C main
   void main() {
-    leds(0);
+    leds(0); // turn off LEDs (quiet night)
     while (ready() == 0) {} // wait for ready signal
     if (core_id() == 0) {
       draw_fire();
@@ -163,7 +163,7 @@ unit main(
       // initiate sending
       pix_sending = 2b11;
     } else {
-      // if we can send, shift to next
+      // if we can send, shift to next byte
       pix_data    = can_send ? pix_data>>8    : pix_data;
       pix_sending = can_send ? pix_sending>>1 : pix_sending;
     }

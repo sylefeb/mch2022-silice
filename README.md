@@ -3,7 +3,8 @@ Silice designs for the MCH2022 badge
 
 For setting up Silice please refer [to its repository](https://github.com/sylefeb/Silice).
 
-The Silice `bin/` directory has to be in the path, as well as yosys and nextpnr-ice40 (using latest versions is recommended).
+The Silice `bin/` directory has to be in the path, as well as yosys and nextpnr-ice40 (using latest versions is recommended). For the Doomfire effect, the riscv toolchain
+is required.
 
 > I am writing a new tutorial for Silice which [can be found here](https://github.com/sylefeb/Silice/tree/master/learn-silice). It also contains a brief introduction to hardware design on FPGA.
 
@@ -12,6 +13,8 @@ The Silice `bin/` directory has to be in the path, as well as yosys and nextpnr-
 ## Building something
 
 Connect the badge, enter the project directory (for instance `lcd_test`) and type `make`. Enjoy!
+
+> The most documented, albeit more complex example is the [Doomfire](./doomfire/README.md).
 
 > The `qpsram_loader` directory contains a project to upload and download data to PSRAM from memory that will not automatically program the badge.
 

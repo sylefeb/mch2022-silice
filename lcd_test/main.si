@@ -8,7 +8,7 @@ Simple LCD initialization and drawing test.
 
 */
 
-// LCD screen
+// LCD screen controller
 $include('../common/lcd.si')
 
 // Main (top) design
@@ -59,7 +59,7 @@ unit main(
         }
         x = x + 1;
       }
-    }
+    }  // while (1)
 
   }
 

@@ -14,7 +14,9 @@ is required.
 
 Connect the badge, enter the project directory (for instance `lcd_test`) and type `make`. Enjoy!
 
-> The most documented, albeit more complex example is the [Doomfire](./doomfire/README.md).
+> A good starting point is the [LCD test](./lcd_test/README.md), which is a small design producing a simple on-screen pattern.
+
+> The [Doomfire](./doomfire/README.md) is also fully documented, it uses Silice RISCV integration to generate a Doom fire from a CPU embedded into a simple hardware driving the lcd screen.
 
 > The `qpsram_loader` directory contains a project to upload and download data to PSRAM from memory that will not automatically program the badge.
 

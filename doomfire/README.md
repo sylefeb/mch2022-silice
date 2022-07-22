@@ -91,7 +91,7 @@ The hardware sees this update as soon as the instruction is executed, and
 Here is a quick overview of what each set of outputs do:
 - `rgb` / `on_rgb` : allows the CPU to write a RGB pixel (24 bits) and forget
 about it while the hardware takes care of sending the three bytes, after conversion to 16 bits.
-- `ready` raises to `1` when the screen is ready, as this does not happen immediately after the FPGA starts.
+- `ready` raises to `1` when the screen is ready, as the controller goes through a complete initialization sequence first.
 - `leds` / `on_leds` : outputs to the board LEDs, also used in simulation to count
 cycles between two `on_leds` pulses.
 
@@ -212,8 +212,7 @@ The controller is instantiated like this:
   lcd_driver lcd(<:auto:>);
   //             ^^^^^^^^ use autobinding for the pins
 ```
-Here I used autobinding, which will find all inputs/outputs of the controller
-that match variables or inputs/outputs in the main unit and connect them. I
+Here I used autobinding (`<:auto:>`), which will find all inputs/outputs of the controller that match variables or inputs/outputs in the main unit and connect them. I
 usually don't recommend autobinding, but here this is convenient to keep the
 source compact and bind all these `lcd_*` pins (checkout the main unit signature).
 

@@ -2,7 +2,7 @@
 
 A Doomfire is essential to warm up cold camping nights!
 
-<center><img src="doomfire.png" width=300></center>
+<center><img src="doomfire.jpg" width=400></center>
 
 ## Running the demo
 

@@ -133,7 +133,7 @@ unit main(
 
   // screen driver
   lcd_driver lcd(<:auto:>);
-  //                        ^^^^^^^^ use autobinding for the pins
+  //             ^^^^^^^^ use autobinding for the pins
 
   // instantiates our CPU as defined above
   cpu_drawer cpu;

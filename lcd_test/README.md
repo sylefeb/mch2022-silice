@@ -91,10 +91,10 @@ Finally we loop over screen pixels forever (note this is a column by column trav
 
 And, the most important part, we generate our pattern!
 ```c
-  uint5  r    <:: x[1,5];
-  uint6  g    <:: y[0,6];
-  uint5  b    <:: 0;
-  uint16 clr  <:: {g[0,3],r,b,g[3,3]};
+  uint5  r    <:: x[1,5]; // r track bits 1 to 6 of x
+  uint6  g    <:: y[0,6]; // g tracks bits 0 to 6 of y
+  uint5  b    <:: 0;      // b is zero
+  uint16 clr  <:: {g[0,3],r,b,g[3,3]}; // assemble the 5-6-5 color
 ```
 This produces a typical red-greed screen tiling, assembled from `x`, `y` coordinates
 into a 16 bits RGB colors.

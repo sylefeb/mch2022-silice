@@ -42,12 +42,12 @@ unit main(
       while (x != 320) {
         y = 0;
         while (y != 240) {
-          uint5  r    <:: x[1,5];
-          uint6  g    <:: y[0,6];
-          uint5  b    <:: 0;
-          uint16 clr  <:: {g[0,3],r,b,g[3,3]};
-          uint8  clr_l <: clr[0,8];
-          uint8  clr_h <: clr[8,8];
+          uint5  r    <:: x[1,5]; // r track bits 1 to 6 of x
+          uint6  g    <:: y[0,6]; // g tracks bits 0 to 6 of y
+          uint5  b    <:: 0;      // b is zero
+          uint16 clr  <:: {g[0,3],r,b,g[3,3]}; // assemble the 5-6-5 color
+          uint8  clr_l <: clr[0,8]; // first byte to send
+          uint8  clr_h <: clr[8,8]; // second byte to send
           // each pixel is two bytes
           lcd.data  = clr_l;
           lcd.valid = 1;

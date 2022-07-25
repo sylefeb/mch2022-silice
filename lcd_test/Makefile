@@ -11,14 +11,13 @@ BUILD_mch2022/build.bin: main.si prepare
 prepare:
 	pushd . ; cd ../common/ext ; ./download_all.sh ; popd
 
+# exports the lcd driver to verilog, and builds the verilog example
 verilog: main.si prepare
 	mkdir -p verilog/export
-	# export lcd driver
 	silice main.si --output verilog/export/lcd_driver.v \
 	--export lcd_driver \
 	--frameworks_dir $(SILICE_DIR)/../frameworks/ \
 	--framework $(SILICE_DIR)/../frameworks/boards/bare/bare.v
-	# produce Verilog design
 	make -C verilog
 
 clean:

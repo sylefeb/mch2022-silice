@@ -130,3 +130,7 @@ Have fun, nothing can break!
 
 > **Note:** Feedback is most welcome, please let me know what you thought about
 this write up.
+
+## Bonus: Verilog export
+
+I added an example of how to export from Silice to Verilog and use the LCD driver zritten in Silice from a Verilog design. To test, run `make verilog`. The export is done in the [`Makefile`](Makefile) in this folder (target *verilog*). For how the module is used see [`verilog/top.v`](verilog/top.v).

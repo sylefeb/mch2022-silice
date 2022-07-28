@@ -20,7 +20,6 @@ algorithm qpsram_qspi(
   input  uint8 send,
   input  uint1 trigger,
   input  uint1 send_else_read,
-  input  uint1 qspi,
   output uint8 read,
   output uint1 clk(0),
   output uint1 csn(1),
@@ -45,9 +44,9 @@ $$end
   always {
     // output enable on ios
     io0.oenable = send_else_read;
-    io1.oenable = send_else_read & qspi;
-    io2.oenable = send_else_read & qspi;
-    io3.oenable = send_else_read & qspi;
+    io1.oenable = send_else_read;
+    io2.oenable = send_else_read;
+    io3.oenable = send_else_read;
     // read current
     read      = {read[0,4],read_reg};
 $$if SIMULATION then
@@ -82,7 +81,7 @@ $$else
   uint4 read_reg(0);
   always {
     // output enable on ios
-    io_oe     = {4{send_else_read}}; // {{3{send_else_read & qspi}},send_else_read};
+    io_oe     = {4{send_else_read}};
     // read current
     read      = {read[0,4],io_i};
     // update outputs
@@ -105,7 +104,8 @@ unit qpsram_ram(
   input   uint8  wdata,
   input   uint1  wenable,
   output  uint1  busy(1),
-  // QSPI flash
+  output  uint1  rdata_available(0),
+  // QPSRAM io
   output  uint1  ram_csn(1),
   output  uint1  ram_clk,
   inout   uint1  ram_io0,
@@ -132,16 +132,15 @@ unit qpsram_ram(
   uint1  init(1);
   uint1  send_else_read(0);
   uint1  accept_in(0);
+  uint1  continue(0);
 
   always {
 
-$$if ICARUS then
-    spi.qspi  = reset ? 0 : ~init;
-$$else
-    spi.qspi  = ~init; // qpi activated after first command
-$$end
     spi.send_else_read = send_else_read;
-    accept_in = 0;
+    accept_in          = 0;
+    rdata_available    = 0;
+    // continue while in_ready stays high
+    continue           = continue & in_ready;
 
     switch (stage)
     {
@@ -161,31 +160,30 @@ $$end
         spi.trigger             = 1;
         spi.send                = sendvec[32,8];
         sendvec                 = sendvec << 8;
-        stage                   = 0;    //  wait
+        stage                   = 0; //  wait
         wait                    = 8; //_ 2 cycles
-        after                   = sending[0,1] ? (wenable ? 5 : 3) : 2;
+        after                   = sending[0,1] ? (wenable ? 4 : 3) : 2;
         sending                 = sending >> 1;
       }
       case 3: {
         spi.trigger             = ~init;
         send_else_read          = 0;
         spi.send                = 0;
-        stage                   = 0;    //  wait
-        wait                    = 1; //_ 9 cycles
+        stage                   = 0; //  wait
+        wait                    = 0; //_ 10 cycles
         after                   = 4;
       }
       case 4: {
-        spi.trigger             = 0;
-        stage                   = 5;
-      }
-      case 5: {
-        send_else_read          = 0;
-        spi.trigger             = 0;
         rdata                   = spi.read;
-        busy                    = 0;
+        rdata_available         = 1;
+        spi.trigger             = continue;
+        busy                    = continue;
         init                    = 0;
-        stage                   = 1; // return to idle
-        accept_in               = 1; // accept an input immediately
+        wait                    = 8; //_ 2 cycles
+        // return to start stage if no further reads, otherwise wait and ...
+        stage                   = ~continue ? 1 : 0;
+        after                   = 4; // ... keep reading
+        accept_in               = ~continue; // accept an input immediately
       }
     } // switch
 
@@ -199,9 +197,10 @@ $$end
       sendvec = init    ? {32b00000000000100010000000100000001,8b0}
       //                   ^^^^^^^^^^ produces 35h when not in QPI
                         : {wenable ? 8h02 : 8hEB,addr,wdata};
-      send_else_read          = 1; // sending
-      busy                    = 1;
-      stage                   = 2;
+      send_else_read = 1; // sending
+      busy           = 1;
+      stage          = 2;
+      continue       = 1; // reset continue
     }
 
   }

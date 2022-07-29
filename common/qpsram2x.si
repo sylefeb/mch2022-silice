@@ -201,7 +201,7 @@ $$end
         after                   = 4; // ... keep reading
         accept_in               = ~continue; // accept an input immediately
 $$if SIMULATION then
-        __display("[%d](%d) qpsram [4] (%x) in_ready:%b accept_in:%b",cycle,cycle>>1,rdata,in_ready,accept_in);
+        // __display("[%d](%d) qpsram [4] (%x) in_ready:%b accept_in:%b",cycle,cycle>>1,rdata,in_ready,accept_in);
 $$end
       }
     } // switch

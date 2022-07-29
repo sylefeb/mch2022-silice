@@ -16,6 +16,12 @@ import('ice40_sb_io_inout.v')
 import('ice40_sb_io.v')
 $$end
 
+$$if VERILATOR then
+import('verilator_data.v') // this is a feature supported by Silice
+                           // verilator framework to access raw data
+                           // stored in a 'data.raw' file
+$$end
+
 algorithm qpsram_qspi(
   input  uint8 send,
   input  uint1 trigger,
@@ -116,7 +122,7 @@ unit qpsram_ram(
 
   uint40 sendvec(0);
 
-  qpsram_qspi spi(
+  qpsram_qspi spi<reginputs>(
     clk     :> ram_clk,
     csn     :> ram_csn,
     io0    <:> ram_io0,
@@ -125,7 +131,7 @@ unit qpsram_ram(
     io3    <:> ram_io3,
   );
 
-  uint4  wait(0);
+  uint5  wait(0);
   uint5  sending(0);
   uint3  stage(1);
   uint3  after(0);
@@ -133,6 +139,11 @@ unit qpsram_ram(
   uint1  send_else_read(0);
   uint1  accept_in(0);
   uint1  continue(0);
+
+$$if VERILATOR then
+  verilator_data vdta(clock <: clock);
+  uint32 cycle(0);
+$$end
 
   always {
 
@@ -145,7 +156,7 @@ unit qpsram_ram(
     switch (stage)
     {
       case 0: {
-        stage = wait[3,1] ? after : 0; // counts up to 8 and goes to after
+        stage = wait[4,1] ? after : 0; // counts up to 16 and goes to after
         wait  = wait + 1;
       }
       case 1: {
@@ -161,7 +172,7 @@ $$end
         spi.send                = sendvec[32,8];
         sendvec                 = sendvec << 8;
         stage                   = 0; //  wait
-        wait                    = 8; //_ 2 cycles
+        wait                    = 16; //_ 2 cycles
         after                   = sending[0,1] ? (wenable ? 4 : 3) : 2;
         sending                 = sending >> 1;
       }
@@ -170,20 +181,28 @@ $$end
         send_else_read          = 0;
         spi.send                = 0;
         stage                   = 0; //  wait
-        wait                    = 0; //_ 10 cycles
+        wait                    = 7; //_ 11 cycles
         after                   = 4;
       }
       case 4: {
+  $$if VERILATOR then
+        rdata                   = vdta.data;  // from 'data.raw'
+        vdta.addr               = vdta.addr + 1;
+  $$else
         rdata                   = spi.read;
+  $$end
         rdata_available         = 1;
         spi.trigger             = continue;
         busy                    = continue;
         init                    = 0;
-        wait                    = 8; //_ 2 cycles
+        wait                    = 16; //_ 2 cycles
         // return to start stage if no further reads, otherwise wait and ...
         stage                   = ~continue ? 1 : 0;
         after                   = 4; // ... keep reading
         accept_in               = ~continue; // accept an input immediately
+$$if SIMULATION then
+        __display("[%d](%d) qpsram [4] (%x) in_ready:%b accept_in:%b",cycle,cycle>>1,rdata,in_ready,accept_in);
+$$end
       }
     } // switch
 
@@ -201,8 +220,14 @@ $$end
       busy           = 1;
       stage          = 2;
       continue       = 1; // reset continue
-    }
+$$if VERILATOR then
+      vdta.addr = addr;
+$$end
+      }
 
+$$if VERILATOR then
+      cycle = cycle + 1;
+$$end
   }
 }
 

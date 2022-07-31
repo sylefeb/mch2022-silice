@@ -161,11 +161,6 @@ $$end
       }
       case 1: {
         accept_in = 1;
-$$if ICARUS then
-        spi.trigger = reset ? 0 : spi.trigger;
-        spi.send    = 0;
-        sending     = reset ? 0: sending;
-$$end
       }
       case 2: {
         spi.trigger             = 1;
@@ -183,6 +178,9 @@ $$end
         stage                   = 0; //  wait
         wait                    = 7; //_ 11 cycles
         after                   = 4;
+$$if VERILATOR then
+        vdta.addr               = addr;
+$$end
       }
       case 4: {
   $$if VERILATOR then
@@ -207,11 +205,7 @@ $$end
     } // switch
 
     // start sending?
-$$if ICARUS then
-    if ((in_ready | init) & accept_in & ~reset) {
-$$else
     if ((in_ready | init) & accept_in) {
-$$end
       sending = wenable ? 5b10000 : 5b01000;
       sendvec = init    ? {32b00000000000100010000000100000001,8b0}
       //                   ^^^^^^^^^^ produces 35h when not in QPI
@@ -220,9 +214,6 @@ $$end
       busy           = 1;
       stage          = 2;
       continue       = 1; // reset continue
-$$if VERILATOR then
-      vdta.addr = addr;
-$$end
       }
 
 $$if VERILATOR then

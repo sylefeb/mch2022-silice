@@ -1,0 +1,48 @@
+// @sylefeb 2020
+// https://github.com/sylefeb/Silice
+// MIT license, see LICENSE_MIT in Silice repo root
+
+$$uart_in_clock_freq_mhz = 12
+$include('../common/ext/uart.si')
+
+$include('../common/qpsram2x.si')
+
+unit main(
+  output uint3 leds,
+) {
+
+  uint1 ram_io0(0); uint1 ram_io1(0);
+  uint1 ram_io2(0); uint1 ram_io3(0);
+  uint1 ram_clk(0); uint1 ram_csn(0);
+
+  // QPSRAM RAM
+  qpsram_ram ram(
+    ram_csn  :> ram_csn,
+    ram_clk  :> ram_clk,
+    ram_io0 <:> ram_io0,
+    ram_io1 <:> ram_io1,
+    ram_io2 <:> ram_io2,
+    ram_io3 <:> ram_io3,
+  );
+
+  always_before {
+    ram.in_ready     = 0; // maintain low, pulse high to read/write
+    ram.wenable      = 0; // we read
+  }
+
+  algorithm {
+
+    // read some
+    uint16 n = 0;
+    // stream from psram
+    while (~n[8,1]) {
+      ram.in_ready  = 1; // keep high
+      if (ram.rdata_available) {
+        __display("data = %x",ram.rdata);
+        n             = n + 1;
+      }
+    }
+
+  }
+
+}

@@ -205,7 +205,7 @@ $$end
     } // switch
 
     // start sending?
-    if ((in_ready | init) & accept_in) {
+    if ((in_ready | init) & accept_in & ~reset) {
       sending = wenable ? 5b10000 : 5b01000;
       sendvec = init    ? {32b00000000000100010000000100000001,8b0}
       //                   ^^^^^^^^^^ produces 35h when not in QPI

@@ -49,6 +49,13 @@ $$end
   uart_in ui;
   uart_receiver urecv(io <:> ui,uart_rx <: uart_rx);
 
+  // UART sender
+  uart_out uo;
+  uart_sender usend(
+    io      <:> uo,
+    uart_tx :>  uart_tx
+  );
+
   uint1  enabled(0);
   uint1  writing(0);
   uint24 addr(0);
@@ -73,8 +80,12 @@ $$end
       addr         = get_addr[0,1] ? {addr[0,16],ui.data_out} : addr;
       get_addr     = enabled ? get_addr>>1 : get_addr;
       blip         = enabled ? 32hffffffff : 0;
+      // send ack after receiving enable tag
+      uo.data_in       = 8h55;
+      uo.data_in_ready = ~enabled & (ui.data_out == 8hAA);
       // enable on tag
       enabled      = enabled | (ui.data_out == 8hAA);
+
     } else {
       if (writing & ~ram.busy) {
         // done, increment address

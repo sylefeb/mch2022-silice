@@ -11,7 +11,7 @@ if len(sys.argv) != 4:
 addr = int(sys.argv[2], 0)
 print("base address is ",addr)
 
-ser = serial.Serial(sys.argv[1],500000)
+ser = serial.Serial(sys.argv[1],500000, timeout=1)
 
 totbytes = os.path.getsize(sys.argv[3])
 f = open(sys.argv[3],"rb")
@@ -20,6 +20,12 @@ f = open(sys.argv[3],"rb")
 packet = bytearray()
 packet.append(0xAA)
 ser.write(packet)
+
+# read ack
+b = ser.read(1)
+if len(b) == 0:
+  print("\n[ERROR] acknowledgement not received, is this the correct port?")
+  os._exit(-1)
 
 # send address
 packet = bytearray()

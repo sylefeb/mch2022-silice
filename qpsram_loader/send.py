@@ -30,6 +30,7 @@ else:
   i = int.from_bytes(b,byteorder='little')
   if i != 0x55:
     print("\n[ERROR] incorrect acknowledgement received, is this the correct port?")
+    os._exit(-1)
 
 # send address
 packet = bytearray()

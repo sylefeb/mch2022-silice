@@ -144,21 +144,21 @@ unit main(
 
   always {
     // can we send the next byte if any is pending?
-    uint1 can_send <:: pix_sending[0,1] & :lcd.ready;
+    uint1 can_send = pix_sending[0,1] & :lcd.ready;
     // track LEDs
-    leds          = cpu.leds;
+    leds           = cpu.leds;
     // track screen ready
-    cpu.ready     = {32{lcd.ready}};
+    cpu.ready      = {32{lcd.ready}};
     // send to screen when possible
-    lcd.valid     = can_send;
-    lcd.data      = pix_data[0,8];
+    lcd.valid      = can_send;
+    lcd.data       = pix_data[0,8];
     // track CPU writes to rgb output
     if (cpu.on_rgb) {
       // CPU requests RGB write
       // grab pixel data (convert RGB 24 bits to 16 bits)
-      uint5  r     <: cpu.rgb[ 9, 5];
-      uint6  g     <: cpu.rgb[16, 6];
-      uint5  b     <: cpu.rgb[25, 5];
+      uint5  r    = cpu.rgb[ 9, 5];
+      uint6  g    = cpu.rgb[16, 6];
+      uint5  b    = cpu.rgb[25, 5];
       pix_data    = {g[0,3],r,b,g[3,3]};
       // initiate sending
       pix_sending = 2b11;

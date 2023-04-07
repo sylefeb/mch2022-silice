@@ -105,12 +105,12 @@ unit main(
       pixels.wenable = 0;
       pixels.addr = 0;
       while (~n[10,1]) {
-        uint5  r     <: pixels.rdata[3,5];
-        uint6  g     <: pixels.rdata[2,6];
-        uint5  b     <: pixels.rdata[3,5];
-        uint16 clr   <: {g[0,3],r,b,g[3,3]};
-        uint8  clr_l <: clr[0,8];
-        uint8  clr_h <: clr[8,8];
+        uint5  r     = pixels.rdata[3,5];
+        uint6  g     = pixels.rdata[2,6];
+        uint5  b     = pixels.rdata[3,5];
+        uint16 clr   = {g[0,3],r,b,g[3,3]};
+        uint8  clr_l = clr[0,8];
+        uint8  clr_h = clr[8,8];
         // each pixel is two bytes
         lcd.data  = clr_l;
         lcd.valid = 1;

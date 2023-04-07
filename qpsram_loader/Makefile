@@ -10,7 +10,7 @@ read: read.si prepare
 
 stream: stream.si prepare
 	silice-make.py -s stream.si -b mch2022 -p basic,uart,psram -o BUILD_$(subst :,_,$@)
-	../common/ext/webusb_fpga.py BUILD_stream/build.bin
+	../common/ext/fpga.py BUILD_stream/build.bin
 
 simulation: simul.si prepare
 	silice-make.py -s simul.si -b icarus -p basic -o BUILD_$(subst :,_,$@)

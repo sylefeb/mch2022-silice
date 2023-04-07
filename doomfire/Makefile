@@ -2,7 +2,7 @@ mch2022: clean BUILD_mch2022/build.bin program
 	cp -f BUILD_mch2022/build.bin doomfire/bitstream.bin
 
 program: BUILD_mch2022/build.bin prepare
-	../common/ext/webusb_fpga.py BUILD_mch2022/build.bin
+	../common/ext/fpga.py BUILD_mch2022/build.bin
 
 BUILD_mch2022/build.bin: main.si prepare
 	silice-make.py -s main.si -b mch2022 -p basic,lcd -o BUILD_mch2022

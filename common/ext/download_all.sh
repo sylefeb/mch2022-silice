@@ -18,4 +18,4 @@ wget $OPT $SILICE_URL/projects/common/plls/icebrkr_20.v
 wget $OPT $SILICE_URL/projects/common/plls/icebrkr_25.v
 wget $OPT $SILICE_URL/projects/common/plls/icebrkr_50.v
 wget $OPT $SILICE_URL/projects/common/plls/icebrkr_30.v
-wget $OPT $MCH2022_TOOLS_URL/webusb_fpga.py
+wget $OPT $MCH2022_TOOLS_URL/fpga.py

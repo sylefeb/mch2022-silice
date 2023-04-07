@@ -9,11 +9,11 @@ The wrapper around the Verilog designs for loading through SPI is in [spi_file.v
 ## Testing
 
 Simply run `make`. The file does not have to be on the SDcard, as the Makefile will use
-the `webusb_fpga` tool to send it alongside the bitstream.
+the `fpga.py` tool to send it alongside the bitstream.
 
 To place the file on the SDcard, copy `image.raw` at the root and give it the name `fpga_bfbfbfbf.dat`.
 Then the badge can be programmed without sending the file:
-```../common/ext/webusb_fpga.py BUILD_mch2022/build.bin```
+```../common/ext/fpga.py BUILD_mch2022/build.bin```
 
 ## Image format
 

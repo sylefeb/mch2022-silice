@@ -8,7 +8,7 @@ To build the writer, run
 ```make write```
 
 Program the FPGA with
-```../common/ext/webusb_fpga.py BUILD_write/build.bin```
+```../common/ext/fpga.py BUILD_write/build.bin```
 
 To send data, run
 ```python send.py <uart port> 0 <file>``` where `<uart port>` is typically `/dev/ttyACM1` under Linux and e.g. `COM6` under Windows.
@@ -19,7 +19,7 @@ To build the reader, run
 ```make read```
 
 Program the FPGA with
-```../common/ext/webusb_fpga.py BUILD_read/build.bin```
+```../common/ext/fpga.py BUILD_read/build.bin```
 
 To read data, run
 ```python get.py <uart port> 0``` where `<uart port>` is typically `/dev/ttyACM1` under Linux and e.g. `COM6` under Windows.

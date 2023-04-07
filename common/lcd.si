@@ -34,10 +34,10 @@ unit parallel_screen(
 }
 
 // Piece of circuitry repeated to send a byte to the screen
-circuitry lcd_write(input byte, input cmd_else_dta)
+circuitry lcd_write(input cd_byte)
 {
-  screen.byte            = byte;
-  screen.data_or_command = ~cmd_else_dta;
+  screen.byte            =  cd_byte[0,8];
+  screen.data_or_command = ~cd_byte[8,1];
   screen.start           = 1;
 }
 
@@ -61,52 +61,30 @@ unit lcd_driver(
   );
 
   // init sequence for full screen (ILI9341)
-  brom uint9 lcd_init[32] = {
+  brom uint9 lcd_init[21] = {
     //v command or data
-    9h101,
-    9h111,
-    9h13a,
-    9h055,
-    9h136,
-    9h040,
-    9h113,
-    9h129,
-    9h12b,
-    9h000,
-    9h000,
-    9h001,
-    9h03f,
-    9h12a,
-    9h000,
-    9h000,
-    9h000,
-    9h0ef,
-    9h151,
-    9h000,
-    9h12c,
-    pad(0)
+    9h101, 9h111, 9h13a, 9h055, 9h136, 9h040, 9h113, 9h129,
+    9h12b, 9h000, 9h000, 9h001, 9h03f, 9h12a, 9h000, 9h000,
+    9h000, 9h0ef, 9h151, 9h000, 9h12c
   };
-
-  always_before {
-    lcd_rst_n = 1; lcd_cs_n  = 0;
-  }
-
+  // hold reset and cs
+  always_before { lcd_rst_n = 1; lcd_cs_n  = 0; }
+  // algorithm, autoruns
   algorithm <autorun> {
-
+    // wait for lcd sync from system
     while (~lcd_mode) { }
-
+    // send init sequence
     lcd_init.addr = 0;
     while (lcd_init.addr != 21) {
-      () = lcd_write(lcd_init.rdata[0,8],
-                     lcd_init.rdata[8,1]);
+      () = lcd_write(lcd_init.rdata);
       lcd_init.addr = lcd_init.addr + 1;
     }
-
+    // answer queries
     while (1) {
-      ready        = 1;
-      screen.byte  = data;
+      ready                  = 1;
       screen.data_or_command = 1;
-      screen.start = valid;
+      screen.byte            = data;
+      screen.start           = valid;
     }
   }
 }

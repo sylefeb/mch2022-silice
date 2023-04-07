@@ -36,10 +36,9 @@ unit parallel_screen(
 // Piece of circuitry repeated to send a byte to the screen
 circuitry lcd_write(input byte, input cmd_else_dta)
 {
-  screen.byte = byte;
+  screen.byte            = byte;
   screen.data_or_command = ~cmd_else_dta;
-  screen.start = 1;
-++: // wait one cycle
+  screen.start           = 1;
 }
 
 // Unit to drive the LCD
@@ -61,60 +60,47 @@ unit lcd_driver(
     screen_d :> lcd_d, screen_dc :> lcd_rs, screen_wrn :> lcd_wr_n
   );
 
-  lcd_rst_n    := 1;
-  lcd_cs_n     := 0;
+  // init sequence for full screen (ILI9341)
+  brom uint9 lcd_init[32] = {
+    //v command or data
+    9h101,
+    9h111,
+    9h13a,
+    9h055,
+    9h136,
+    9h040,
+    9h113,
+    9h129,
+    9h12b,
+    9h000,
+    9h000,
+    9h001,
+    9h03f,
+    9h12a,
+    9h000,
+    9h000,
+    9h000,
+    9h0ef,
+    9h151,
+    9h000,
+    9h12c,
+    pad(0)
+  };
+
+  always_before {
+    lcd_rst_n = 1; lcd_cs_n  = 0;
+  }
 
   algorithm <autorun> {
 
-    // a subroutine to wait a long time
-    subroutine wait()
-    {
-      uint20 count = 1;
-      while (count != 0) { count = count + 1; }
-    }
-
     while (~lcd_mode) { }
 
-    // NOTE: if done efficiently, the sequence below would normally be
-    // encoded in a small BRAM with a compact design going through the BRAM
-    // and sending in sequence with lcd_write. However, I am here using
-    // Silice prototyping features for convenience.
-
-    () = lcd_write(8h01,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h11,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h3a,1b1);
-    () = lcd_write(8h55,1b0);
-    () <- wait <- ();
-
-    () = lcd_write(8h36,1b1);
-    () = lcd_write(8h40,1b0);
-
-    () = lcd_write(8h13,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h29,1b1);
-    () <- wait <- ();
-
-    () = lcd_write(8h2b,1b1);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h01,1b0);
-    () = lcd_write(8h3f,1b0);
-
-    () = lcd_write(8h2a,1b1);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8h00,1b0);
-    () = lcd_write(8hef,1b0);
-
-    () = lcd_write(8h51,1b1);
-    () = lcd_write(8h00,1b0);
-
-    () = lcd_write(8h2c,1b1);
+    lcd_init.addr = 0;
+    while (lcd_init.addr != 21) {
+      () = lcd_write(lcd_init.rdata[0,8],
+                     lcd_init.rdata[8,1]);
+      lcd_init.addr = lcd_init.addr + 1;
+    }
 
     while (1) {
       ready        = 1;

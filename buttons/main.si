@@ -1,0 +1,58 @@
+// @sylefeb 2023
+// https://github.com/sylefeb/Silice
+// MIT license, see LICENSE_MIT in Silice repo root
+/*
+
+Simple button test.
+Buttons are not trivial as they require communicating with the ESP32.
+All building blocks are provided in the mch2022 badge repo, see spi_buttons.v
+
+*/
+
+// 30 MHz clock
+import('../common/ext/icebrkr_30.v')
+// ESP32 SPI file interface
+import('../common/spi_buttons.v')
+append('../common/ext/spi_dev_core.v')
+append('../common/ext/spi_dev_proto.v')
+
+// Main (top) design
+unit main(
+  output uint3 leds,
+  output uint8 lcd_d,
+  output uint1 lcd_rs,
+  output uint1 lcd_wr_n,
+  output uint1 lcd_cs_n(0),
+  output uint1 lcd_rst_n(1),
+  input  uint1 lcd_mode,
+  input  uint1 lcd_fmark,
+  input  uint1 espspi_mosi,
+  output uint1 espspi_miso,
+  input  uint1 espspi_clk,
+  input  uint1 espspi_cs_n,
+  output uint1 espirq_n,
+) <@clock_pll> {
+  // ^^^^ design uses a PLL generated clock
+  //                    vvv
+  uint1 clock_pll = uninitialized;
+  pll pllgen(
+    clock_in  <: clock,
+    clock_out :> clock_pll,
+  );
+
+  // ESP32 SPI button interface
+  spi_buttons btns(
+    clk      <: clock_pll,
+    resetq   <: reset,
+    spi_mosi <: espspi_mosi,
+    spi_miso :> espspi_miso,
+    spi_clk  <: espspi_clk,
+    spi_cs_n <: espspi_cs_n,
+    irq_n    :> espirq_n,
+  );
+
+  always_before {
+    leds = {btns.joystick_left,btns.joystick_right,btns.accept};
+  }
+
+}

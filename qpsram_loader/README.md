@@ -1,7 +1,7 @@
 # QPI-PSRAM writer and loader
 
-This tool is used to store data from UART into SPRAM. Typically this would be
-used to put data in SPRAM before switching to a design that expects this data
+This tool is used to store data from UART into PSRAM (external RAM accessible with the SPI protocol). 
+Typically this would be used to put data in PSRAM before switching to a design that expects this data
 to be there. As long as the badge has power, the written data remains in SPRAM.
 
 To build the writer, run

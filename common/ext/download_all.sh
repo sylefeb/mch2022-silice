@@ -1,5 +1,5 @@
 #!/bin/bash
-SILICE_URL=https://raw.githubusercontent.com/sylefeb/Silice/draft
+SILICE_URL=https://raw.githubusercontent.com/sylefeb/Silice/master
 MCH2022_SILICE_URL=https://raw.githubusercontent.com/sylefeb/mch2022-silice/main/
 MCH2022_TOOLS_URL=https://raw.githubusercontent.com/badgeteam/mch2022-tools/master/
 MCH2022_ICE40_URL=https://raw.githubusercontent.com/badgeteam/mch2022-firmware-ice40/master/
